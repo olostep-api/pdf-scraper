@@ -1,14 +1,20 @@
 # Olostep PDF Scraper
 
-Extract structured content from PDF links with a single command.
+Scrape PDFs via the Olostep API and export structured content plus per-format files.
 
-This tool is designed for users who need to scrape one or many PDFs and keep results in a predictable JSON output for downstream use.
+## Features
 
-- For one PDF URL, it uses `/v1/scrapes`.
-- For multiple PDF URLs, it uses `/v1/batches` and `/v1/retrieve`.
-- It stores outputs in the `output/` folder.
+- Single PDF scrape via `/v1/scrapes`
+- Batch scraping via `/v1/batches` and per-item content via `/v1/retrieve`
+- Writes one aggregate JSON file plus extracted content files under `output/`
+- Supports formats like `markdown`, `text`, `html`, `json` (batch retrieve formats are normalized to `html|markdown|json`)
 
-## Setup
+## Requirements
+
+- Python 3.10+
+- `pip`
+
+## Quickstart
 
 ```bash
 pip install -r requirements.txt
@@ -21,19 +27,9 @@ Edit `.env`:
 OLOSTEP_API_KEY="YOUR_KEY"
 ```
 
-Only `OLOSTEP_API_KEY` (or `OLOSTEP_API_TOKEN`) is read from `.env`.
+## Environment Variables
 
-## Config defaults (in code)
-
-Defaults are defined in `config/config.py`:
-
-- `OLOSTEP_API_BASE`: `https://api.olostep.com`
-- `OUTPUT_DIR`: `output`
-- `DEFAULT_FORMATS`: `markdown,text`
-- `DEFAULT_OUT_FILE`: `output.json`
-- `DEFAULT_POLL_SECONDS`: `5`
-- `DEFAULT_ITEMS_LIMIT`: `50`
-- `LOG_LEVEL`: `INFO` (`DEBUG`, `INFO`, `WARNING`, `ERROR`)
+- `OLOSTEP_API_KEY` (required): Olostep API key used for authentication.
 
 ## Usage
 
@@ -43,7 +39,7 @@ Defaults are defined in `config/config.py`:
 python main.py --url "https://example.com/file.pdf"
 ```
 
-Optional:
+Specify formats and output name:
 
 ```bash
 python main.py --url "https://example.com/file.pdf" --formats markdown,text --out single.json
@@ -70,35 +66,53 @@ python main.py --urls-file urls.txt --out batch.json
 python main.py --url "https://site.com/a.pdf" --url "https://site.com/b.pdf"
 ```
 
-## CLI options
+## CLI Reference
 
-- `--url`: PDF URL, repeatable
-- `--urls-file`: text file containing URLs
-- `--out`: output JSON filename (saved under `output/`)
+- `--url`: PDF URL (repeatable)
+- `--urls-file`: text file with 1 URL per line
+- `--out`: output JSON filename (written under `output/`)
 - `--formats`: comma-separated formats (example: `markdown,text,html`)
-- `--poll-seconds`: batch polling interval
+  - Single mode: passed through to `/v1/scrapes`
+  - Batch mode: retrieve formats are filtered to `html|markdown|json`
+    - If none match, `formats` is omitted when calling `/v1/retrieve` (Olostep returns all formats)
+- `--poll-seconds`: batch polling interval in seconds
 - `--items-limit`: batch item page size
 
-## Output
+## Outputs
 
-- JSON output:
+- Aggregate JSON:
   - If `--out` is set: `output/<out>`
   - If `--out` is omitted and single mode: `output/single_{HH-MM}_{YYYY-MM-DD}.json`
   - If `--out` is omitted and batch mode: `output/batch{count}_{HH-MM}_{YYYY-MM-DD}.json`
-- Extracted files: `output/`
+- Extracted content files:
+  - Written under `output/` as `<custom_id>.<ext>` when that format is present (example: `pdf-1.md`, `0.md`)
+  - In single mode `custom_id` is `pdf-1`
+  - In batch mode `custom_id` defaults to the item index (`0`, `1`, `2`, ...)
 
-For each result, markdown/text content is saved when available (`markdown_content`, `text_content`, etc.).
+## Configuration Defaults (in code)
 
-## Logging
+Defaults live in `config/config.py` (only `OLOSTEP_API_KEY` comes from `.env`):
 
-Uses `loguru` for runtime logs.
+- `OLOSTEP_API_BASE`: `https://api.olostep.com`
+- `OUTPUT_DIR`: `output`
+- `DEFAULT_FORMATS`: `markdown,text`
+- `DEFAULT_OUT_FILE`: `output.json`
+- `DEFAULT_POLL_SECONDS`: `5`
+- `DEFAULT_ITEMS_LIMIT`: `50`
+- `LOG_LEVEL`: `INFO` (`DEBUG`, `INFO`, `WARNING`, `ERROR`)
 
-```bash
-python main.py --url "https://example.com/file.pdf"
-```
+To change these values, edit `config/config.py` (env overrides are not supported right now).
 
-## Behavior notes
+## Security Notes
 
-- Single mode does not use `/v1/retrieve`; it uses the `/v1/scrapes` response directly.
-- Batch mode uses `/v1/retrieve` per completed item.
-- Retrieve formats are normalized to Olostep-supported values (`html`, `markdown`, `json`).
+- Do not commit `.env` or API tokens.
+- If a token was exposed in git history, rotate it immediately.
+
+## License
+
+TBD (no license file added yet).
+
+## Behavior Notes
+
+- Single mode uses the `/v1/scrapes` response directly and does not call `/v1/retrieve`.
+- Batch mode calls `/v1/retrieve` for each completed item.

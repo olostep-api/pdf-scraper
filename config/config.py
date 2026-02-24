@@ -15,12 +15,8 @@ class Config:
 
 
 def load_dotenv(path: str = ".env") -> None:
-    """
-    Tiny .env loader (no external deps).
-
-    - Only sets keys that are not already in the environment.
-    - Supports: KEY=VALUE, optional leading 'export ', and quoted values.
-    """
+    """Load only OLOSTEP_API_KEY from .env if it is not already set."""
+    allowed_keys = {"OLOSTEP_API_KEY"}
 
     def strip_quotes(value: str) -> str:
         if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
@@ -42,7 +38,7 @@ def load_dotenv(path: str = ".env") -> None:
                 key = key.strip()
                 value = strip_quotes(value.strip())
 
-                if key and key not in os.environ:
+                if key in allowed_keys and key not in os.environ:
                     os.environ[key] = value
     except FileNotFoundError:
         return
@@ -51,9 +47,9 @@ def load_dotenv(path: str = ".env") -> None:
 def load_config() -> Config:
     load_dotenv(".env")
 
-    # Runtime defaults are controlled here (not via .env), except API key/token.
+    # Runtime defaults are controlled in code. Only API key is loaded from .env.
     api_base = "https://api.olostep.com"
-    api_key = os.getenv("OLOSTEP_API_KEY") or os.getenv("OLOSTEP_API_TOKEN") or ""
+    api_key = os.getenv("OLOSTEP_API_KEY", "")
     output_dir = "output"
     default_formats = "markdown,text"
     default_out_file = "output.json"
@@ -62,7 +58,7 @@ def load_config() -> Config:
     log_level = "INFO"
 
     if not api_key:
-        raise SystemExit("Missing OLOSTEP_API_KEY (or OLOSTEP_API_TOKEN) env var.")
+        raise SystemExit("Missing OLOSTEP_API_KEY env var.")
 
     return Config(
         api_base=api_base,
