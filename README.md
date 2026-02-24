@@ -47,7 +47,7 @@ python main.py --url "https://example.com/file.pdf" --formats markdown,text --ou
 
 ### Batch PDFs
 
-Create `urls.txt` (one URL per line, `#` comments supported):
+Create `test_urls.txt` (one URL per line, `#` comments supported):
 
 ```text
 https://site.com/a.pdf
@@ -57,7 +57,7 @@ https://site.com/b.pdf
 Run batch:
 
 ```bash
-python main.py --urls-file urls.txt --out batch.json
+python main.py --urls-file test_urls.txt --out batch.json
 ```
 
 ### Repeatable `--url`
