@@ -11,6 +11,7 @@ class Config:
     default_out_file: str
     default_poll_seconds: int
     default_items_limit: int
+    log_level: str
 
 
 def load_dotenv(path: str = ".env") -> None:
@@ -50,13 +51,15 @@ def load_dotenv(path: str = ".env") -> None:
 def load_config() -> Config:
     load_dotenv(".env")
 
+    # Runtime defaults are controlled here (not via .env), except API key/token.
     api_base = "https://api.olostep.com"
     api_key = os.getenv("OLOSTEP_API_KEY") or os.getenv("OLOSTEP_API_TOKEN") or ""
     output_dir = "output"
-    default_formats = os.getenv("DEFAULT_FORMATS", "markdown,text")
+    default_formats = "markdown,text"
     default_out_file = "output.json"
-    default_poll_seconds = int(os.getenv("DEFAULT_POLL_SECONDS", "5"))
-    default_items_limit = int(os.getenv("DEFAULT_ITEMS_LIMIT", "50"))
+    default_poll_seconds = 5
+    default_items_limit = 50
+    log_level = "INFO"
 
     if not api_key:
         raise SystemExit("Missing OLOSTEP_API_KEY (or OLOSTEP_API_TOKEN) env var.")
@@ -69,6 +72,7 @@ def load_config() -> Config:
         default_out_file=default_out_file,
         default_poll_seconds=default_poll_seconds,
         default_items_limit=default_items_limit,
+        log_level=log_level,
     )
 
 

@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import os
 from datetime import datetime
 from typing import List
 
@@ -10,22 +9,21 @@ from loguru import logger
 from config.config import load_config, ensure_output_path
 from src.batch_scraper import BatchScraper
 from src.single_pdf_scraper import scrape_single_pdf
-from utils import load_urls, normalize_retrieve_formats, write_outputs
+from utils.pipeline_io import load_urls, normalize_retrieve_formats, write_outputs
 
 
-def setup_logger() -> None:
-    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+def setup_logger(log_level: str) -> None:
     logger.remove()
     logger.add(
         sink=lambda msg: print(msg, end=""),
-        level=log_level,
+        level=log_level.upper(),
         format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
     )
 
 
 async def main_async():
-    setup_logger()
     cfg = load_config()
+    setup_logger(cfg.log_level)
     logger.info("Configuration loaded. API base: {}", cfg.api_base)
 
     p = argparse.ArgumentParser(

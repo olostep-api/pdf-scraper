@@ -21,16 +21,19 @@ Edit `.env`:
 OLOSTEP_API_KEY="YOUR_KEY"
 ```
 
-## Environment variables
+Only `OLOSTEP_API_KEY` (or `OLOSTEP_API_TOKEN`) is read from `.env`.
 
-- `OLOSTEP_API_KEY` or `OLOSTEP_API_TOKEN`: Olostep API token (required)
-- `OLOSTEP_API_BASE`: default `https://api.olostep.com`
-- `OUTPUT_DIR`: default `output`
-- `DEFAULT_FORMATS`: default `markdown,text`
-- `DEFAULT_OUT_FILE`: default `output.json`
-- `DEFAULT_POLL_SECONDS`: default `5`
-- `DEFAULT_ITEMS_LIMIT`: default `50`
-- `LOG_LEVEL`: default `INFO` (`DEBUG`, `INFO`, `WARNING`, `ERROR`)
+## Config defaults (in code)
+
+Defaults are defined in `config/config.py`:
+
+- `OLOSTEP_API_BASE`: `https://api.olostep.com`
+- `OUTPUT_DIR`: `output`
+- `DEFAULT_FORMATS`: `markdown,text`
+- `DEFAULT_OUT_FILE`: `output.json`
+- `DEFAULT_POLL_SECONDS`: `5`
+- `DEFAULT_ITEMS_LIMIT`: `50`
+- `LOG_LEVEL`: `INFO` (`DEBUG`, `INFO`, `WARNING`, `ERROR`)
 
 ## Usage
 
@@ -91,7 +94,7 @@ For each result, markdown/text content is saved when available (`markdown_conten
 Uses `loguru` for runtime logs.
 
 ```bash
-LOG_LEVEL=DEBUG python main.py --url "https://example.com/file.pdf"
+python main.py --url "https://example.com/file.pdf"
 ```
 
 ## Behavior notes
