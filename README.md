@@ -1,39 +1,106 @@
 # Olostep PDF Scraper
 
-Scrape PDFs via the Olostep API and export structured content plus per-format files.
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](#requirements)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
+
+Scrape PDFs via the **Olostep API** and export **structured content** (aggregate JSON) plus **per-format files** (Markdown/HTML/Text/JSON) into `output/`.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [CLI Reference](#cli-reference)
+- [Output Layout](#output-layout)
+- [Development](#development)
+- [Security](#security)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
 
 ## Features
 
-- Single PDF scrape via `/v1/scrapes`
-- Batch scraping via `/v1/batches` and per-item content via `/v1/retrieve`
-- Writes one aggregate JSON file plus extracted content files under `output/`
-- Supports formats like `markdown`, `text`, `html`, `json` (batch retrieve formats are normalized to `html|markdown|json`)
+- **Single PDF** scrape via `POST /v1/scrapes`
+- **Batch scraping** via `POST /v1/batches`, polling, and per-item retrieval via `GET /v1/retrieve`
+- Produces one aggregate JSON file plus extracted content files per format under `output/`
+- Format support: `markdown`, `text`, `html`, `json`
+- Batch retrieve formats are normalized to `html|markdown|json`
 
 ## Requirements
 
-- Python 3.10+
+- Python **3.10+**
 - `pip`
+- An Olostep API key
 
-## Quickstart
+---
+
+## Quick Start
+
+### 1) Install dependencies
 
 ```bash
+git clone <YOUR_REPO_URL>.git
+cd <YOUR_REPO_DIR>
 pip install -r requirements.txt
+```
+
+### 2) Configure API key
+
+```bash
 cp .env.example .env
 ```
 
-Edit `.env`:
+Then set your key:
 
 ```bash
 OLOSTEP_API_KEY="YOUR_KEY"
 ```
 
-## Environment Variables
+### 3) Run your first scrape
 
-- `OLOSTEP_API_KEY` (required): Olostep API key used for authentication.
+```bash
+python main.py --url "https://example.com/file.pdf"
+```
+
+---
+
+## Configuration
+
+### Environment variables
+
+This project reads the Olostep API key from `.env`:
+
+- `OLOSTEP_API_KEY` **(required)**: Olostep API key used for authentication
+
+Example `.env`:
+
+```bash
+OLOSTEP_API_KEY="YOUR_KEY"
+```
+
+### Code defaults
+
+Defaults live in `config/config.py`:
+
+- `OUTPUT_DIR`: `output`
+- `DEFAULT_FORMATS`: `markdown,text`
+- `DEFAULT_OUT_FILE`: `output.json`
+- `DEFAULT_POLL_SECONDS`: `5`
+- `DEFAULT_ITEMS_LIMIT`: `50`
+- `LOG_LEVEL`: `INFO` (`DEBUG`, `INFO`, `WARNING`, `ERROR`)
+
+---
 
 ## Usage
 
 ### Single PDF
+
+Scrape a single PDF URL:
 
 ```bash
 python main.py --url "https://example.com/file.pdf"
@@ -54,7 +121,7 @@ https://site.com/a.pdf
 https://site.com/b.pdf
 ```
 
-Run batch:
+Run:
 
 ```bash
 python main.py --urls-file test_urls.txt --out batch.json
@@ -62,57 +129,78 @@ python main.py --urls-file test_urls.txt --out batch.json
 
 ### Repeatable `--url`
 
+You can pass multiple `--url` flags:
+
 ```bash
 python main.py --url "https://site.com/a.pdf" --url "https://site.com/b.pdf"
 ```
 
+### How modes work
+
+- **Single mode**: calls `/v1/scrapes` and writes the response plus extracted files (no `/v1/retrieve`)
+- **Batch mode**: creates a batch via `/v1/batches`, polls until items complete, then calls `/v1/retrieve` per completed item
+
+---
+
 ## CLI Reference
 
-- `--url`: PDF URL (repeatable)
-- `--urls-file`: text file with 1 URL per line
-- `--out`: output JSON filename (written under `output/`)
-- `--formats`: comma-separated formats (example: `markdown,text,html`)
-  - Single mode: passed through to `/v1/scrapes`
-  - Batch mode: retrieve formats are filtered to `html|markdown|json`
-    - If none match, `formats` is omitted when calling `/v1/retrieve` (Olostep returns all formats)
-- `--poll-seconds`: batch polling interval in seconds
-- `--items-limit`: batch item page size
+| Flag | Description |
+| --- | --- |
+| `--url` | PDF URL (**repeatable**) |
+| `--urls-file` | Text file with 1 URL per line (`#` comments supported) |
+| `--out` | Output JSON filename (written under `output/`) |
+| `--formats` | Comma-separated formats, e.g. `markdown,text,html` |
+| `--poll-seconds` | Batch polling interval (seconds) |
+| `--items-limit` | Batch item page size |
 
-## Outputs
+### Format behavior notes
 
-- Aggregate JSON:
-  - If `--out` is set: `output/<out>`
-  - If `--out` is omitted and single mode: `output/single_{HH-MM}_{YYYY-MM-DD}.json`
-  - If `--out` is omitted and batch mode: `output/batch{count}_{HH-MM}_{YYYY-MM-DD}.json`
-- Extracted content files:
-  - Written under `output/` as `<custom_id>.<ext>` when that format is present (example: `pdf-1.md`, `0.md`)
-  - In single mode `custom_id` is `pdf-1`
-  - In batch mode `custom_id` defaults to the item index (`0`, `1`, `2`, ...)
+- **Single mode**: `--formats` is passed through to `/v1/scrapes`
+- **Batch mode**: retrieve formats are filtered to `html|markdown|json`
+- If none match, `formats` is omitted when calling `/v1/retrieve` (Olostep returns all formats)
 
-## Configuration Defaults (in code)
+---
 
-Defaults live in `config/config.py` (only `OLOSTEP_API_KEY` comes from `.env`):
+## Output Layout
 
-- `OLOSTEP_API_BASE`: `https://api.olostep.com`
-- `OUTPUT_DIR`: `output`
-- `DEFAULT_FORMATS`: `markdown,text`
-- `DEFAULT_OUT_FILE`: `output.json`
-- `DEFAULT_POLL_SECONDS`: `5`
-- `DEFAULT_ITEMS_LIMIT`: `50`
-- `LOG_LEVEL`: `INFO` (`DEBUG`, `INFO`, `WARNING`, `ERROR`)
+### Aggregate JSON
 
-To change these values, edit `config/config.py` (env overrides are not supported right now).
+Written to:
 
-## Security Notes
+- If `--out` is set: `output/<out>`
+- If `--out` omitted (single): `output/single_{HH-MM}_{YYYY-MM-DD}.json`
+- If `--out` omitted (batch): `output/batch{count}_{HH-MM}_{YYYY-MM-DD}.json`
 
-- Do not commit `.env` or API tokens.
-- If a token was exposed in git history, rotate it immediately.
+### Extracted content files
+
+Written under `output/` as `<custom_id>.<ext>` when that format exists:
+
+- Single mode: `custom_id` is `pdf-1` (example: `output/pdf-1.md`)
+- Batch mode: `custom_id` defaults to the item index (`0`, `1`, `2`, ...)
+- Batch examples: `output/0.md`, `output/1.html`
+
+---
+
+## Development
+
+Recommended workflow:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Run locally:
+
+```bash
+python main.py --url "https://example.com/file.pdf"
+```
 
 ## License
+This project is licensed under the MIT License.
 
-TBD (no license file added yet).
+See [`LICENSE`](LICENSE)
+ file for full details.
 
-## Behavior Notes
-
-- Single mode uses the `/v1/scrapes` response directly and does not call `/v1/retrieve`.
-- Batch mode calls `/v1/retrieve` for each completed item.
