@@ -6,6 +6,8 @@
 Scrape PDFs via the [Olostep API](https://www.olostep.com/) and export **structured content** (aggregate JSON) plus **per-format files** (Markdown/HTML/Text/JSON) into `output/`.
 The workflow follows the [Olostep documentation](https://docs.olostep.com/get-started/welcome) for single and batch scraping patterns.
 
+![Olostep PDF Scraper UI](ui.png)
+
 ---
 
 ## Table of Contents
