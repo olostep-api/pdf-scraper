@@ -3,7 +3,8 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](#requirements)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
 
-Scrape PDFs via the **Olostep API** and export **structured content** (aggregate JSON) plus **per-format files** (Markdown/HTML/Text/JSON) into `output/`.
+Scrape PDFs via the [Olostep API](https://www.olostep.com/) and export **structured content** (aggregate JSON) plus **per-format files** (Markdown/HTML/Text/JSON) into `output/`.
+The workflow follows the [Olostep documentation](https://docs.olostep.com/get-started/welcome) for single and batch scraping patterns.
 
 ---
 
@@ -16,17 +17,18 @@ Scrape PDFs via the **Olostep API** and export **structured content** (aggregate
 - [Usage](#usage)
 - [CLI Reference](#cli-reference)
 - [Output Layout](#output-layout)
+- [Project Structure](#project-structure)
 - [Development](#development)
-- [Security](#security)
-- [Contributing](#contributing)
+- [Notes](#notes)
+- [Olostep References](#olostep-references)
 - [License](#license)
 
 ---
 
 ## Features
 
-- **Single PDF** scrape via `POST /v1/scrapes`
-- **Batch scraping** via `POST /v1/batches`, polling, and per-item retrieval via `GET /v1/retrieve`
+- **Single PDF** scrape via [Olostep `/v1/scrapes`](https://docs.olostep.com/features/scraping/scrape-pdf)
+- **Batch scraping** via [Olostep `/v1/batches`](https://docs.olostep.com/features/batches/batches), polling, and per-item retrieval via `GET /v1/retrieve`
 - Produces one aggregate JSON file plus extracted content files per format under `output/`
 - Format support: `markdown`, `text`, `html`, `json`
 - Batch retrieve formats are normalized to `html|markdown|json`
@@ -35,7 +37,7 @@ Scrape PDFs via the **Olostep API** and export **structured content** (aggregate
 
 - Python **3.10+**
 - `pip`
-- An Olostep API key
+- An Olostep API key (generate one from the [Olostep API Keys dashboard](https://www.olostep.com/dashboard/api-keys))
 
 ---
 
@@ -60,6 +62,8 @@ Then set your key:
 ```bash
 OLOSTEP_API_KEY="YOUR_KEY"
 ```
+
+If you do not have a key yet, create one from the [Olostep API Keys dashboard](https://www.olostep.com/dashboard/api-keys).
 
 ### 3) Run your first scrape
 
@@ -181,6 +185,27 @@ Written under `output/` as `<custom_id>.<ext>` when that format exists:
 
 ---
 
+## Project Structure
+
+```text
+.
+├── app.py                    # Streamlit UI for single/batch PDF scraping
+├── main.py                   # CLI entrypoint and argument parsing
+├── config/
+│   └── config.py             # Runtime defaults and environment settings
+├── src/
+│   ├── workflow.py           # Orchestrates single and batch execution paths
+│   ├── single_pdf_scraper.py # Single-PDF scrape helper (`/v1/scrapes`)
+│   └── batch_scraper.py      # Batch create/poll/retrieve client
+├── utils/
+│   └── pipeline_io.py        # Output writing and format file handling
+├── test/                     # Tests for workflow and batch/single behavior
+├── test_urls.txt             # Sample input URL list for batch mode
+└── output/                   # Generated run artifacts
+```
+
+---
+
 ## Development
 
 Recommended workflow:
@@ -198,9 +223,20 @@ Run locally:
 python main.py --url "https://example.com/file.pdf"
 ```
 
+## Notes
+
+- In single mode, extracted files are written using `custom_id=pdf-1` by default.
+- In batch mode, each completed item is retrieved and written as its own file set.
+- Batch retrieve formats are constrained to `html`, `markdown`, or `json`.
+- If no allowed retrieve formats remain after filtering, `/v1/retrieve` is called without `formats`.
+
+## Olostep References
+
+- [Olostep Documentation](https://docs.olostep.com/)
+- [Olostep Scrape PDF Guide](https://docs.olostep.com/features/scraping/scrape-pdf)
+- [Olostep Batch Guide](https://docs.olostep.com/features/batches/batches)
+
 ## License
 This project is licensed under the MIT License.
 
-See [`LICENSE`](LICENSE)
- file for full details.
-
+See [`LICENSE`](LICENSE) file for full details.

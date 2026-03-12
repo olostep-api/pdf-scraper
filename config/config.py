@@ -1,6 +1,14 @@
 import os
 from dataclasses import dataclass
 
+API_BASE = "https://api.olostep.com"
+OUTPUT_DIR = "output"
+DEFAULT_FORMATS = "markdown,text"
+DEFAULT_OUT_FILE = "output.json"
+DEFAULT_POLL_SECONDS = 5
+DEFAULT_ITEMS_LIMIT = 50
+LOG_LEVEL = "INFO"
+
 
 @dataclass(frozen=True)
 class Config:
@@ -24,8 +32,8 @@ def load_dotenv(path: str = ".env") -> None:
         return value
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            for raw_line in f:
+        with open(path, "r", encoding="utf-8") as handle:
+            for raw_line in handle:
                 line = raw_line.strip()
                 if not line or line.startswith("#"):
                     continue
@@ -47,28 +55,19 @@ def load_dotenv(path: str = ".env") -> None:
 def load_config() -> Config:
     load_dotenv(".env")
 
-    # Runtime defaults are controlled in code. Only API key is loaded from .env.
-    api_base = "https://api.olostep.com"
     api_key = os.getenv("OLOSTEP_API_KEY", "")
-    output_dir = "output"
-    default_formats = "markdown,text"
-    default_out_file = "output.json"
-    default_poll_seconds = 5
-    default_items_limit = 50
-    log_level = "INFO"
-
     if not api_key:
         raise SystemExit("Missing OLOSTEP_API_KEY env var.")
 
     return Config(
-        api_base=api_base,
+        api_base=API_BASE,
         api_key=api_key,
-        output_dir=output_dir,
-        default_formats=default_formats,
-        default_out_file=default_out_file,
-        default_poll_seconds=default_poll_seconds,
-        default_items_limit=default_items_limit,
-        log_level=log_level,
+        output_dir=OUTPUT_DIR,
+        default_formats=DEFAULT_FORMATS,
+        default_out_file=DEFAULT_OUT_FILE,
+        default_poll_seconds=DEFAULT_POLL_SECONDS,
+        default_items_limit=DEFAULT_ITEMS_LIMIT,
+        log_level=LOG_LEVEL,
     )
 
 
